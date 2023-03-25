@@ -31,7 +31,7 @@ function falses(n)
 end
 
 function length(T)
-  if not T then
+  if (not T) or (#T == 0) then
     return 0
   end
   i = 0
@@ -49,6 +49,18 @@ function contains(T, x)
   end
   return false
 end
+
+function without(T, x)
+  local S = {}
+  for k,v in pairs(T) do
+    if v ~= x then
+      table.insert(S, v)
+    end
+  end
+  return S
+end
+
+
 
 function allcombs()
   
@@ -112,7 +124,7 @@ function newgo()
   faceup = true, hover = false, selected = false}
 end
 function Card:collide(x,y)
-  return (self.x <= x and self.x + card_width >= x) and (self.y <= y and self.y + card_height >= y)
+  return (self.x <= x and self.x + self.w >= x) and (self.y <= y and self.y + self.h >= y)
 end
 function Card:enlarge()
   self.x = self.x - (select_width - card_width)/2
@@ -179,17 +191,20 @@ end
 
 -- DECK
 ranks = {'A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K'}
+suits = {'C', 'D', 'H', 'S'}
 function buildDeck()
   local deck = {}
+  local deckindex = {}
   for j, suit in pairs({'C', 'D', 'H', 'S'}) do
     for i, rank in pairs(ranks) do
       if rank == 'T' then rank_string = '10' else rank_string = rank end
       name = rank..suit
       table.insert(deck, Card:new{rank = i, suit = j, value = ((i <= 10) and i) or 10, name = name, 
           x = 0, y = 0, vx = 0, vy = 0, tx = 0, ty = 0, w = card_width, h = card_height, faceup = false})
+      deckindex[name] = deck[#deck]
     end
   end
-  return deck
+  return deck, deckindex
 end
 -- DECK
 
@@ -315,11 +330,7 @@ end
 function GS:startphase(phase)
   if phase == 'play' then
     self.whoseturn = 3 - self.dealer
-    
-    if self.turncard.rank == 11 then    -- nobs
-      self.scores[self.dealer] = self.scores[self.dealer] + 2
-    end
-    
+        
   elseif phase == 'show' then
     self.whoseturn = 3 - self.dealer
   end
